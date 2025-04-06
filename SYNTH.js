@@ -63,7 +63,7 @@ controlsContainer.innerHTML = `
     <label>Carrier Decay: <input type="range" id="decay" min="0" max="2" step="0.01" value="0.05">
         <span id="decayValue">0.05</span>
     </label>
-    
+
     <label>Carrier Sustain: <input type="range" id="sustain" min="0" max="1" step="0.01" value="0.0">
         <span id="sustainValue">0.00</span>
     </label>
@@ -82,7 +82,7 @@ controlsContainer.innerHTML = `
     <label>Modulator A Decay: <input type="range" id="modDecay" min="0" max="2" step="0.01" value="0.05">
         <span id="modDecayValue">0.05</span>
     </label>
-    
+
     <label>Modulator A Sustain: <input type="range" id="modSustain" min="0" max="1" step="0.01" value="0.0">
         <span id="modSustainValue">0.00</span>
     </label>
@@ -101,7 +101,7 @@ controlsContainer.innerHTML = `
     <label>Modulator B Decay: <input type="range" id="modBDecay" min="0" max="2" step="0.01" value="0.05">
         <span id="modBDecayValue">0.05</span>
     </label>
-    
+
     <label>Modulator B Sustain: <input type="range" id="modBSustain" min="0" max="1" step="0.01" value="0.0">
         <span id="modBSustainValue">0.00</span>
     </label>
@@ -120,7 +120,7 @@ controlsContainer.innerHTML = `
     <label>Modulator C Decay: <input type="range" id="modCDecay" min="0" max="2" step="0.01" value="0.05">
         <span id="modCDecayValue">0.05</span>
     </label>
-    
+
     <label>Modulator C Sustain: <input type="range" id="modCSustain" min="0" max="1" step="0.01" value="0.0">
         <span id="modCSustainValue">0.00</span>
     </label>
@@ -166,6 +166,21 @@ controlsContainer.innerHTML = `
     <button id="panicButton" style="background: red; color: white; padding: 4px 8px; margin-left: 10px;">PANIC</button>
     <br>
     </fieldset>
+    <br>
+    <fieldset>
+        <legend>Presets</legend>
+        <label>Preset Name: <input type="text" id="presetName" placeholder="Enter preset name"></label>
+        <button id="savePresetButton">Save</button>
+        <br>
+        <label>Load Preset:
+            <select id="presetList">
+                <option value="">-- Select Preset --</option>
+            </select>
+        </label>
+        <button id="loadPresetButton">Load</button>
+        <button id="deletePresetButton" style="margin-left: 5px; background-color: #ff8080;">Delete</button>
+    </fieldset>
+    <br>
 `;
 document.body.appendChild(controlsContainer);
 
@@ -227,6 +242,42 @@ const modCVolumeValue = document.getElementById("modCVolumeValue");
 const envScaleControl = document.getElementById("envScale");
 const envScaleValue = document.getElementById("envScaleValue");
 const panicButton = document.getElementById("panicButton");
+
+const presetNameInput = document.getElementById("presetName");
+const savePresetButton = document.getElementById("savePresetButton");
+const presetListSelect = document.getElementById("presetList");
+const loadPresetButton = document.getElementById("loadPresetButton");
+const deletePresetButton = document.getElementById("deletePresetButton");
+
+const controlsToSave = {
+    carrierRatio: carrierRatioControl,
+    attack: attackControl,
+    decay: decayControl,
+    sustain: sustainControl,
+    release: releaseControl,
+    modARatio: ratioControl,
+    modAAttack: modAttackControl,
+    modADecay: modDecayControl,
+    modASustain: modSustainControl,
+    modARelease: modReleaseControl,
+    modBRatio: modBRatioControl,
+    modBAttack: modBAttackControl,
+    modBDecay: modBDecayControl,
+    modBSustain: modBSustainControl,
+    modBRelease: modBReleaseControl,
+    modCRatio: modCRatioControl,
+    modCAttack: modCAttackControl,
+    modCDecay: modCDecayControl,
+    modCSustain: modCSustainControl,
+    modCRelease: modCReleaseControl,
+    carrierVolume: carrierVolumeControl,
+    modAVolume: modAVolumeControl,
+    modBVolume: modBVolumeControl,
+    modCVolume: modCVolumeControl,
+    algorithm: document.getElementById("algorithm"),
+    modIndex: modIndexControl,
+    envScale: envScaleControl,
+};
 
 
 modIndexControl.addEventListener("input", () => modIndexValue.textContent = modIndexControl.value);
@@ -713,3 +764,129 @@ function allNotesOff() {
     }
     console.log("Panic complete. All notes stopped.");
 }
+
+
+const PRESET_STORAGE_KEY = 'fmSynthPresets_v1';
+
+function getPresets() {
+    try {
+        const storedPresets = localStorage.getItem(PRESET_STORAGE_KEY);
+        return storedPresets ? JSON.parse(storedPresets) : {};
+    } catch (e) {
+        console.error("Error reading presets from localStorage:", e);
+        return {};
+    }
+}
+
+function savePresets(presets) {
+    try {
+        localStorage.setItem(PRESET_STORAGE_KEY, JSON.stringify(presets));
+    } catch (e) {
+        console.error("Error saving presets to localStorage:", e);
+        alert("Could not save presets. Storage might be full or disabled.");
+    }
+}
+
+function populatePresetList() {
+    const presets = getPresets();
+    presetListSelect.innerHTML = '<option value="">-- Select Preset --</option>';
+
+    const sortedNames = Object.keys(presets).sort((a, b) => a.localeCompare(b));
+
+    sortedNames.forEach(name => {
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = name;
+        presetListSelect.appendChild(option);
+    });
+}
+
+function handleSavePreset() {
+    const name = presetNameInput.value.trim();
+    if (!name) {
+        alert("Please enter a name for the preset.");
+        return;
+    }
+
+    const currentPreset = {};
+    for (const key in controlsToSave) {
+        if (controlsToSave.hasOwnProperty(key)) {
+            currentPreset[key] = controlsToSave[key].value;
+        }
+    }
+
+    const presets = getPresets();
+
+    if (presets[name]) {
+       if (!confirm(`Preset "${name}" already exists. Overwrite?`)) {
+           return;
+       }
+    }
+
+    presets[name] = currentPreset;
+    savePresets(presets);
+    populatePresetList();
+    presetListSelect.value = name;
+    alert(`Preset "${name}" saved.`);
+    presetNameInput.value = name;
+}
+
+function handleLoadPreset() {
+    const name = presetListSelect.value;
+    if (!name) {
+        alert("Please select a preset to load.");
+        return;
+    }
+
+    const presets = getPresets();
+    const presetToLoad = presets[name];
+
+    if (!presetToLoad) {
+        alert(`Preset "${name}" not found!`);
+        populatePresetList();
+        return;
+    }
+
+    console.log(`Loading preset: ${name}`);
+    for (const key in presetToLoad) {
+        if (controlsToSave.hasOwnProperty(key) && presetToLoad.hasOwnProperty(key)) {
+            const control = controlsToSave[key];
+            control.value = presetToLoad[key];
+
+             const eventType = (control.type === 'select-one') ? 'change' : 'input';
+             control.dispatchEvent(new Event(eventType, { bubbles: true }));
+        }
+    }
+    presetNameInput.value = name;
+    alert(`Preset "${name}" loaded.`);
+}
+
+function handleDeletePreset() {
+    const name = presetListSelect.value;
+    if (!name) {
+        alert("Please select a preset to delete.");
+        return;
+    }
+
+    if (!confirm(`Are you sure you want to delete preset "${name}"?`)) {
+        return;
+    }
+
+    const presets = getPresets();
+    if (presets[name]) {
+        delete presets[name];
+        savePresets(presets);
+        populatePresetList();
+        presetNameInput.value = '';
+        alert(`Preset "${name}" deleted.`);
+    } else {
+        alert(`Preset "${name}" not found!`);
+        populatePresetList();
+    }
+}
+
+savePresetButton.addEventListener("click", handleSavePreset);
+loadPresetButton.addEventListener("click", handleLoadPreset);
+deletePresetButton.addEventListener("click", handleDeletePreset);
+
+populatePresetList();
