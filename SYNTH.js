@@ -163,7 +163,6 @@ controlsContainer.innerHTML = `
     <label>Envelope Scale: <input type="range" id="envScale" min="0.1" max="3" step="0.1" value="1">
         <span id="envScaleValue">1.00</span>
     </label>
-    <button id="panicButton" style="background: red; color: white; padding: 4px 8px; margin-left: 10px;">PANIC</button>
     <br>
     </fieldset>
     <br>
