@@ -136,10 +136,10 @@ controlsContainer.innerHTML = `
     <label>Modulator A Volume: <input type="range" id="modAVolume" min="0" max="1" step="0.01" value="0.5">
         <span id="modAVolumeValue">0.50</span>
     </label>
-    <label>Modulator B Volume: <input type="range" id="modBVolume" min="0" max="1" step="0.01" value="0.5">
+    <label>Modulator B Volume: <input type="range" id="modBVolume" min="0" max="1" step="0.01" value="0.0">
         <span id="modBVolumeValue">0.50</span>
     </label>
-    <label>Modulator C Volume: <input type="range" id="modCVolume" min="0" max="1" step="0.01" value="0.5">
+    <label>Modulator C Volume: <input type="range" id="modCVolume" min="0" max="1" step="0.01" value="0.0">
         <span id="modCVolumeValue">0.50</span>
     </label>
     </fieldset>
